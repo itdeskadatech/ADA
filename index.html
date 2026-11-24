@@ -97,7 +97,7 @@ function stack(at,sf,top){const cnt={};at.forEach(a=>{const s=sf(a);if(s)cnt[s]=
  return cols([...m.keys()].sort().slice(-60),m,all.length>top?names.concat('Other'):names)}
 const inR=d=>(!DF.from&&!DF.to)||(d&&(!DF.from||d>=DF.from)&&(!DF.to||d<=DF.to));
 function render(){const A=$('#app');TB.pg=TB.pg||0;
- if(!L.length){A.innerHTML='<div class=empty><h2>No data loaded yet</h2>Click <b>Connect Sheet</b> and paste your Apps Script Web App URL, or use <b>Load CSV</b> / <b>Paste data</b>.</div>';meta(0);return}
+ if(!L.length){A.innerHTML=typeof API!='undefined'&&API?'<div class=empty><h2>Loading your Calling File…</h2>The first load can take 1–2 minutes for large sheets. Please keep this tab open.</div>':'<div class=empty><h2>No data loaded yet</h2>Click <b>Connect Sheet</b> and paste your Apps Script Web App URL, or use <b>Load CSV</b> / <b>Paste data</b>.</div>';meta(0);return}
  const aF=a=>(!F.agent||a.ka==F.agent)&&(!F.camp||a.kc==F.camp)&&(!F.sub||a.ks==F.sub)&&(!F.conn||''+a.conn==F.conn)&&(!F.n||''+a.n==F.n)&&(DF.f!='call'||inR(a.date));
  const lf=l=>(!F.state||l.kst==F.state)&&(!F.city||l.kci==F.city)&&(!F.q||[l.name,l.email,l.phone].some(x=>norm(x).includes(F.q)))&&(DF.f!='lead'||inR(l.ld))&&EX.every((j,x)=>!F['x'+x]||l.ex[x]==F['x'+x]);
  const AA=F.agent||F.camp||F.sub||F.conn||F.n||(DF.f=='call'&&(DF.from||DF.to));V=[];
@@ -168,18 +168,18 @@ let API=API_URL;if(!API)try{API=localStorage.getItem('api')||''}catch(e){}
 const st=t=>{$('#st').textContent=t||''};
 const idb=(m,v)=>new Promise(r=>{try{const q=indexedDB.open('calldash',1);q.onupgradeneeded=()=>q.result.createObjectStore('d');q.onerror=()=>r(null);
  q.onsuccess=()=>{const tx=q.result.transaction('d',m=='get'?'readonly':'readwrite'),o=tx.objectStore('d'),x=m=='get'?o.get('rows'):o.put(v,'rows');x.onsuccess=()=>r(x.result||null);x.onerror=()=>r(null)}}catch(e){r(null)}});
-async function jf(u,t=0){try{const j=await(await fetch(u,{cache:'no-store'})).json();if(j.error)throw new Error(j.error);return j}catch(e){if(t<2&&!/Unauthorized/.test(e.message))return jf(u,t+1);throw e}}
-async function fetchAll(){const base=API+(API.includes('?')?'&':'?'),PS=5000,f=await jf(base+'start=0&count='+PS),T=f.total,starts=[];
+async function jf(u,t=0){try{const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),120000);let j;try{j=await(await fetch(u,{cache:'no-store',signal:ac.signal})).json()}finally{clearTimeout(tm)}if(j.error)throw new Error(j.error);return j}catch(e){if(t<2&&!/Unauthorized/.test(e.message))return jf(u,t+1);throw e}}
+async function fetchAll(){const base=API+(API.includes('?')?'&':'?'),PS=3000,f=await jf(base+'start=0&count='+PS),T=f.total,starts=[];
  for(let s=PS;s<T;s+=PS)starts.push(s);let done=f.rows.length,ix=0;const res=[];st('Loading '+done+' / '+T+' rows…');
  const w=async()=>{while(ix<starts.length){const i=ix++,j=await jf(base+'start='+starts[i]+'&count='+PS);res[i]=j.rows;done+=j.rows.length;st('Loading '+done+' / '+T+' rows…')}};
  await Promise.all([1,2,3,4,5,6].map(w));return{header:f.header,rows:f.rows.concat(...res)}}
 function apply(d){const f=F,x=DF;load('',0,[d.header,...d.rows]);F=f;DF=x;buildF();sync();render()}
 let busy=0;
 async function pull(first){if(!API||busy)return;busy=1;
- try{if(first){const c=await idb('get');if(c){apply(c);STAMP=new Date(c.ts).toLocaleString()+' (cached)';meta(1);st('Showing saved data · updating from sheet…')}}
+ try{if(first){const c=await Promise.race([idb('get'),new Promise(r=>setTimeout(()=>r(null),2500))]);if(c){apply(c);STAMP=new Date(c.ts).toLocaleString()+' (cached)';meta(1);st('Showing saved data · updating from sheet…')}}
   const d=await fetchAll();d.ts=Date.now();apply(d);st('');idb('put',d)}
  catch(e){st('⚠ Sheet connection failed: '+(e.message||e))}finally{busy=0}}
 $('#rf').onclick=()=>{if(API)pull();else $('#cn').click()};
 $('#cn').onclick=()=>{const u=prompt('Paste your Apps Script Web App URL (including ?token=...)',API);if(u){API=u.trim();try{localStorage.setItem('api',API)}catch(e){}pull()}};
-if(API){pull(1);setInterval(()=>{if(!document.hidden)pull()},300000)}else{meta(0);render()}
+if(API){meta(0);render();st('Connecting to your Calling File sheet…');pull(1);setInterval(()=>{if(!document.hidden)pull()},300000)}else{meta(0);render()}
 </script></body></html>
