@@ -163,11 +163,13 @@ function lead(l){const m=$('#modal');m.innerHTML=`<div><button class=g style="fl
 $('#modal').onclick=e=>{if(e.target.id=='modal')e.target.style.display='none'};
 async function exp(){const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"',csv=[HDR,...V.map(v=>v.l.r)].map(r=>HDR.map((h,i)=>q(r[i])).join(',')).join('\n');
  try{const d=window.claude&&await claude.use('downloads');if(!d)throw 0;await d.save({filename:'calling-data-filtered.csv',data:csv})}catch(e){alert('Download is not available in this view.')}}
-const API_URL=''; // optional: paste your Apps Script Web App URL (with ?token=...) here instead of using the Connect button
+const API_URL='https://script.google.com/macros/s/AKfycbyxh_pxg24fjhAkYHfAwjYfC6JvlKLlKxnsgc5SnlnMYzjZzYjgbCT7wrbBSnsJ7_E/exec?token=Ada@2026'; // optional: paste your Apps Script Web App URL (with ?token=...) here instead of using the Connect button
 let API=API_URL;if(!API)try{API=localStorage.getItem('api')||''}catch(e){}
 async function pull(){if(!API)return;
- try{const r=await fetch(API,{cache:'no-store'}),j=await r.json();if(j.error)throw new Error(j.error);
-  const f=F,d=DF;load(j.rows.map(x=>x.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),0);F=f;DF=d;buildF();sync();render()}
+ try{let start=0,rows=[],header=[];
+  while(start!==null){const u=API+(API.includes('?')?'&':'?')+'start='+start+'&count=3000',j=await(await fetch(u,{cache:'no-store'})).json();
+   if(j.error)throw new Error(j.error);header=j.header;rows=rows.concat(j.rows);start=j.next;$('#meta').innerHTML='<span><i class=dot></i>Loading '+rows.length+' / '+j.total+' rows…</span>'}
+  const f=F,d=DF;load([header,...rows].map(x=>x.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),0);F=f;DF=d;buildF();sync();render()}
  catch(e){$('#meta').insertAdjacentHTML('beforeend','<span style="color:#fca5a5">⚠ Sheet connection failed: '+esc(e.message||e)+'</span>')}}
 $('#rf').onclick=()=>{if(API)pull();else $('#cn').click()};
 $('#cn').onclick=()=>{const u=prompt('Paste your Apps Script Web App URL (including ?token=...)',API);if(u){API=u.trim();try{localStorage.setItem('api',API)}catch(e){}pull()}};
