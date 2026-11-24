@@ -28,7 +28,7 @@ label{display:flex;flex-direction:column;font-size:11px;color:var(--mu);gap:3px;
 #modal{position:fixed;inset:0;background:#000a;display:none;place-items:center;z-index:50;padding:16px}#modal>div{background:var(--c2);border:1px solid var(--bd);border-radius:16px;padding:20px;max-width:640px;width:100%;max-height:88vh;overflow:auto}
 .tl{border-left:3px solid var(--bd);margin:8px 0 8px 8px;padding:4px 0 4px 14px}.tl.c{border-color:var(--gn)}.tl.n{border-color:var(--rd)}
 </style></head><body>
-<header><div><h1>CALLING PERFORMANCE ANALYTICS</h1><p>Live Lead &amp; Calling Intelligence Dashboard</p><div class="meta" id="meta"></div></div>
+<header><div><h1>CALLING PERFORMANCE ANALYTICS</h1><p>Live Lead &amp; Calling Intelligence Dashboard</p><div class="meta" id="meta"></div><div id="st" style="font-size:12px;margin-top:6px;color:#fcd34d"></div></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap"><label class="btn" style="color:#fff;min-width:0;cursor:pointer">⬆ Load CSV<input type="file" id="file" accept=".csv,.tsv,.txt" hidden></label><button class="g" id="pasteBtn">Paste data</button><button class="g" id="cn">🔗 Connect Sheet</button><button class="g" id="rf">⟳ Refresh</button><button class="g" id="reset">Reset Filters</button></div></header>
 <main><div id="paste" style="display:none;margin-bottom:14px"><textarea id="pt" rows="5" style="width:100%" placeholder="Paste rows copied from Google Sheets (header row first)"></textarea><button id="pgo" style="margin-top:6px">Apply</button></div>
 <div id="flt"></div><div id="app"></div></main><div id="modal"></div>
@@ -50,18 +50,18 @@ const dd=i=>Date.parse(i)/864e5;
 function parseCSV(t){const f=t.split('\n')[0],dl=(f.match(/\t/g)||[]).length>(f.match(/,/g)||[]).length?'\t':',',o=[];let r=[],c='',q=0;
  for(let i=0;i<t.length;i++){const h=t[i];if(q){if(h=='"'){if(t[i+1]=='"'){c+='"';i++}else q=0}else c+=h}else if(h=='"')q=1;else if(h==dl){r.push(c);c=''}else if(h=='\n'){r.push(c);o.push(r);r=[];c=''}else if(h!='\r')c+=h}
  if(c||r.length){r.push(c);o.push(r)}return o}
-function load(text,save){const t=parseCSV(text.replace(/^\uFEFF/,''));if(t.length<2){alert('No data rows found');return}
+function load(text,save,tab){const t=tab||parseCSV(text.replace(/^\uFEFF/,''));if(t.length<2){alert('No data rows found');return}
  HDR=t[0].map(h=>h.trim());const idx={},att={},used=new Set();
  HDR.forEach((h,i)=>{const n=norm(h),m=n.match(ATR);if(m){const k=ORD[m[1]]||parseInt(m[1]),f=(AFLD.find(x=>x[1].test(m[2]))||[])[0];if(f){(att[k]=att[k]||{})[f]=i;used.add(i);return}}
   for(const[k,re]of LF)if(!(k in idx)&&re.test(n)){idx[k]=i;used.add(i);return}});
  EX=HDR.map((h,i)=>i).filter(i=>!used.has(i));L=[];AT=[];
  t.slice(1).filter(r=>r.some(c=>c.trim())).forEach((r,i)=>{const g=k=>idx[k]==null?'':(r[idx[k]]||'').trim(),ph=g('phone').replace(/\D/g,'').slice(-10);
-  const l={i,r,uid:ph||'row'+i,name:tc(g('name')),email:norm(g('email')),phone:g('phone'),state:tc(g('state')),city:tc(g('city')),ld:pd(g('ldate')),ex:EX.map(j=>norm(r[j])),at:[]};
+  const l={i,r,uid:ph||'row'+i,name:tc(g('name')),email:norm(g('email')),phone:g('phone'),state:tc(g('state')),city:tc(g('city')),ld:pd(g('ldate')),ex:EX.map(j=>norm(r[j])),at:[]};l.kst=norm(l.state);l.kci=norm(l.city);
   Object.keys(att).map(Number).sort((a,b)=>a-b).forEach(k=>{const c=att[k],x=f=>c[f]==null?'':(r[c[f]]||'').trim();if(!['agent','date','sub','conn','camp'].some(f=>x(f)))return;
-   const a={L:l,n:k,agent:tc(x('agent')),date:pd(x('date')),sub:tc(x('sub')),comm:x('comm'),conn:cv(x('conn')),camp:tc(x('camp'))};l.at.push(a);AT.push(a)});L.push(l)});
+   const a={L:l,n:k,agent:tc(x('agent')),date:pd(x('date')),sub:tc(x('sub')),comm:x('comm'),conn:cv(x('conn')),camp:tc(x('camp'))};a.ka=norm(a.agent);a.kc=norm(a.camp);a.ks=norm(a.sub);l.at.push(a);AT.push(a)});L.push(l)});
  OPT={};const ad=(id,k,lab)=>{if(k)(OPT[id]=OPT[id]||new Map()).set(k,lab)};
- L.forEach(l=>{ad('state',norm(l.state),l.state);ad('city',norm(l.city),l.city);EX.forEach((j,x)=>ad('x'+x,l.ex[x],(l.r[j]||'').trim()))});
- AT.forEach(a=>{ad('agent',norm(a.agent),a.agent);ad('camp',norm(a.camp),a.camp);ad('sub',norm(a.sub),a.sub);ad('n',''+a.n,a.n+(a.n==1?'st':a.n==2?'nd':a.n==3?'rd':'th')+' attempt')});
+ L.forEach(l=>{ad('state',l.kst,l.state);ad('city',l.kci,l.city);EX.forEach((j,x)=>ad('x'+x,l.ex[x],(l.r[j]||'').trim()))});
+ AT.forEach(a=>{ad('agent',a.ka,a.agent);ad('camp',a.kc,a.camp);ad('sub',a.ks,a.sub);ad('n',''+a.n,a.n+(a.n==1?'st':a.n==2?'nd':a.n==3?'rd':'th')+' attempt')});
  OPT.conn=new Map([['1','Connected'],['0','Not Connected']]);OVR=AT.length?AT.filter(a=>a.conn===1).length/AT.length*100:0;
  F={};DF={f:'call',from:'',to:''};STAMP=new Date().toLocaleString();buildF();render();
  if(save)try{localStorage.setItem('cd',text)}catch(e){}}
@@ -78,8 +78,8 @@ $('#reset').onclick=()=>{F={};DF={f:'call',from:'',to:''};TB.pg=0;sync();render(
 $('#file').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(t=>load(t,1))};
 $('#pasteBtn').onclick=()=>{const p=$('#paste');p.style.display=p.style.display=='none'?'block':'none'};
 $('#pgo').onclick=()=>{load($('#pt').value,1);$('#paste').style.display='none'};
-const mk=(k,l)=>({k,l,calls:0,cn:0,nc:0,ld:new Set,ag:new Set,cp:new Set,st:new Set});
-const add=(g,a)=>{g.calls++;a.conn===1&&g.cn++;a.conn===0&&g.nc++;g.ld.add(a.L.uid);a.agent&&g.ag.add(a.agent);a.camp&&g.cp.add(a.camp);a.sub&&g.st.add(a.sub)};
+const mk=(k,l)=>({k,l,calls:0,cn:0,nc:0,ld:new Set,ag:new Set,cp:new Set,st:new Set,n:{}});
+const add=(g,a)=>{g.calls++;g.n[a.n]=(g.n[a.n]||0)+1;a.conn===1&&g.cn++;a.conn===0&&g.nc++;g.ld.add(a.L.uid);a.agent&&g.ag.add(a.agent);a.camp&&g.cp.add(a.camp);a.sub&&g.st.add(a.sub)};
 const rt=g=>g.calls?g.cn/g.calls*100:0,av=g=>g.ld.size?g.calls/g.ld.size:0;
 function grpA(arr,kf,lf){const m=new Map();for(const a of arr){const k=kf(a);if(!k)continue;let g=m.get(k);if(!g)m.set(k,g=mk(k,lf(a)));add(g,a)}return[...m.values()]}
 function grpV(kf,lf){const m=new Map();for(const v of V){const k=kf(v.l);if(!k)continue;let g=m.get(k);if(!g)m.set(k,g=mk(k,lf(v.l)));g.ld.add(v.l.uid);v.a.forEach(a=>add(g,a))}return[...m.values()]}
@@ -98,8 +98,8 @@ function stack(at,sf,top){const cnt={};at.forEach(a=>{const s=sf(a);if(s)cnt[s]=
 const inR=d=>(!DF.from&&!DF.to)||(d&&(!DF.from||d>=DF.from)&&(!DF.to||d<=DF.to));
 function render(){const A=$('#app');TB.pg=TB.pg||0;
  if(!L.length){A.innerHTML='<div class=empty><h2>No data loaded yet</h2>Click <b>Connect Sheet</b> and paste your Apps Script Web App URL, or use <b>Load CSV</b> / <b>Paste data</b>.</div>';meta(0);return}
- const aF=a=>(!F.agent||norm(a.agent)==F.agent)&&(!F.camp||norm(a.camp)==F.camp)&&(!F.sub||norm(a.sub)==F.sub)&&(!F.conn||''+a.conn==F.conn)&&(!F.n||''+a.n==F.n)&&(DF.f!='call'||inR(a.date));
- const lf=l=>(!F.state||norm(l.state)==F.state)&&(!F.city||norm(l.city)==F.city)&&(!F.q||[l.name,l.email,l.phone].some(x=>norm(x).includes(F.q)))&&(DF.f!='lead'||inR(l.ld))&&EX.every((j,x)=>!F['x'+x]||l.ex[x]==F['x'+x]);
+ const aF=a=>(!F.agent||a.ka==F.agent)&&(!F.camp||a.kc==F.camp)&&(!F.sub||a.ks==F.sub)&&(!F.conn||''+a.conn==F.conn)&&(!F.n||''+a.n==F.n)&&(DF.f!='call'||inR(a.date));
+ const lf=l=>(!F.state||l.kst==F.state)&&(!F.city||l.kci==F.city)&&(!F.q||[l.name,l.email,l.phone].some(x=>norm(x).includes(F.q)))&&(DF.f!='lead'||inR(l.ld))&&EX.every((j,x)=>!F['x'+x]||l.ex[x]==F['x'+x]);
  const AA=F.agent||F.camp||F.sub||F.conn||F.n||(DF.f=='call'&&(DF.from||DF.to));V=[];
  for(const l of L){if(!lf(l))continue;const a=l.at.filter(aF);if(AA&&!a.length)continue;V.push({l,a})}
  const at=V.flatMap(v=>v.a),calls=at.length,cn=at.filter(a=>a.conn===1).length,nc=at.filter(a=>a.conn===0).length,rate=calls?cn/calls*100:0;
@@ -110,22 +110,22 @@ function render(){const A=$('#app');TB.pg=TB.pg||0;
  const K=[kp('👥','Total Leads',lu,'unique by phone','Unique leads (phone is the identifier)'),kp('📞','Total Attempts',calls,ns.slice(0,3).map(n=>at.filter(a=>a.n==n).length).join(' / ')+' (1st/2nd/3rd)','All calling attempts'),
  kp('✅','Leads Called',called,p1(called/lu*100)+' of leads','Leads with at least one attempt'),kp('🟢','Connected',cn,p1(rate)+' of attempts','Connected attempts'),kp('🔴','Not Connected',nc,p1(calls?nc/calls*100:0)+' of attempts','Unsuccessful attempts'),
  kp('📈','Connection Rate',p1(rate),(d>=0?'▲ ':'▼ ')+Math.abs(d).toFixed(1)+' pts vs overall','Connected ÷ attempts × 100; trend vs whole sheet',d>=0?'up':'dn'),
- kp('🧑‍💼','Unique Agents',U(at.map(a=>norm(a.agent)).filter(Boolean)),'','Distinct agents'),kp('🎯','Campaigns',U(at.map(a=>norm(a.camp)).filter(Boolean)),'','Distinct campaigns'),
+ kp('🧑‍💼','Unique Agents',U(at.map(a=>a.ka).filter(Boolean)),'','Distinct agents'),kp('🎯','Campaigns',U(at.map(a=>a.kc).filter(Boolean)),'','Distinct campaigns'),
  kp('🔁','Avg Attempts / Lead',(lu?calls/lu:0).toFixed(2),'attempts ÷ leads','Total attempts ÷ unique leads'),kp('🚫','Leads With No Call',noCall,p1(lu?noCall/lu*100:0)+' of leads','Generated but never called'),
  kp('2️⃣','2+ Attempt Leads',two,p1(lu?two/lu*100:0)+' of leads','Called at least twice'),kp('3️⃣','3 Attempt Leads',three,p1(lu?three/lu*100:0)+' of leads','Called three times or more')].join('');
  const byN=n=>U(at.filter(a=>a.n==n).map(a=>a.L.uid)),lc=U(at.filter(a=>a.conn===1).map(a=>a.L.uid));
  const fun=[['Lead Generated',lu],['Leads Called',called],...ns.slice(0,3).map(n=>[n+(n==1?'st':n==2?'nd':'rd')+' Attempt',byN(n),'n',n]),['Connected',lc,'conn',1]].map(x=>`<div class=fn ${x[2]?`data-f="${x[2]}" data-v="${x[3]}"`:''} style="width:${Math.max(22,lu?x[1]/lu*100:0)}%"><span>${x[0]}</span><b>${x[1]} · ${p1(lu?x[1]/lu*100:0)}</b></div>`).join('');
  const as=ns.map(n=>{const x=at.filter(a=>a.n==n),c=x.filter(a=>a.conn===1).length;return{n,calls:x.length,cn:c,k:''+n,l:n+(n==1?'st':n==2?'nd':n==3?'rd':'th')+' attempt'}});
  const ncAfter=ns.map(k=>[...per.values()].filter(x=>{const s=x.slice().sort((a,b)=>a.n-b.n);return s.length>=k&&!s.slice(0,k).some(a=>a.conn===1)}).length);
- const ag=grpA(at,a=>norm(a.agent),a=>a.agent).sort((a,b)=>rt(b)-rt(a)||b.cn-a.cn||b.calls-a.calls),nA=ag.length,tn=Math.ceil(nA/3);
- const agT=tb(['#','Agent','Leads','Calls','1st','2nd','3rd','Conn','Not Conn','Conn %','Avg Att','Campaigns'],ag.map((g,i)=>({k:g.k,v:[i+1,esc(g.l),g.ld.size,g.calls,g.n1=at.filter(a=>norm(a.agent)==g.k&&a.n==1).length,at.filter(a=>norm(a.agent)==g.k&&a.n==2).length,at.filter(a=>norm(a.agent)==g.k&&a.n==3).length,g.cn,g.nc,`<span class="pill ${nA<3?'t-mid':i<tn?'t-top':i>=nA-tn?'t-low':'t-mid'}">${p1(rt(g))}</span>`,av(g).toFixed(2),g.cp.size]})),'agent');
- const cp=grpA(at,a=>norm(a.camp),a=>a.camp).sort((a,b)=>b.calls-a.calls);
+ const ag=grpA(at,a=>a.ka,a=>a.agent).sort((a,b)=>rt(b)-rt(a)||b.cn-a.cn||b.calls-a.calls),nA=ag.length,tn=Math.ceil(nA/3);
+ const agT=tb(['#','Agent','Leads','Calls','1st','2nd','3rd','Conn','Not Conn','Conn %','Avg Att','Campaigns'],ag.map((g,i)=>({k:g.k,v:[i+1,esc(g.l),g.ld.size,g.calls,g.n[1]||0,g.n[2]||0,g.n[3]||0,g.cn,g.nc,`<span class="pill ${nA<3?'t-mid':i<tn?'t-top':i>=nA-tn?'t-low':'t-mid'}">${p1(rt(g))}</span>`,av(g).toFixed(2),g.cp.size]})),'agent');
+ const cp=grpA(at,a=>a.kc,a=>a.camp).sort((a,b)=>b.calls-a.calls);
  const cpT=tb(['Campaign','Leads','Calls','Conn','Not Conn','Conn %','Agents','Avg Att'],cp.map(g=>({k:g.k,v:[esc(g.l),g.ld.size,g.calls,g.cn,g.nc,p1(rt(g)),g.ag.size,av(g).toFixed(2)]})),'camp');
- const stt=grpV(l=>norm(l.state),l=>l.state).sort((a,b)=>b.ld.size-a.ld.size),ct=grpV(l=>norm(l.city),l=>l.city);
+ const stt=grpV(l=>l.kst,l=>l.state).sort((a,b)=>b.ld.size-a.ld.size),ct=grpV(l=>l.kci,l=>l.city);
  const sT=tb(['State','Leads','Calls','Conn','Not Conn','Conn %','Avg Att'],stt.map(g=>({k:g.k,v:[esc(g.l),g.ld.size,g.calls,g.cn,g.nc,p1(rt(g)),av(g).toFixed(2)]})),'state');
  const ctR=ct.filter(g=>g.calls),top=ctR.slice().sort((a,b)=>rt(b)-rt(a)||b.calls-a.calls).slice(0,10),bot=ctR.slice().sort((a,b)=>rt(a)-rt(b)||b.calls-a.calls).slice(0,10);
  const cT=tb(['City','Leads','Calls','Conn','Conn %','Avg Att'],ct.sort((a,b)=>b.calls-a.calls).slice(0,20).map(g=>({k:g.k,v:[esc(g.l),g.ld.size,g.calls,g.cn,p1(rt(g)),av(g).toFixed(2)]})),'city');
- const ss=grpA(at,a=>norm(a.sub),a=>a.sub).sort((a,b)=>b.calls-a.calls);
+ const ss=grpA(at,a=>a.ks,a=>a.sub).sort((a,b)=>b.calls-a.calls);
  const ssT=tb(['Status','Calls','Conn','Not Conn','% of calls','Agents','Campaigns'],ss.map(g=>({k:g.k,v:[esc(g.l),g.calls,g.cn,g.nc,p1(g.calls/calls*100),g.ag.size,g.cp.size]})),'sub');
  const cd=cn+nc?cn/(cn+nc)*100:0,dn=`<div class=donut style="background:conic-gradient(var(--gn) 0 ${cd}%,var(--rd) 0)"><div><span><b style="font-size:22px">${p1(rate)}</b><br><span class=mu>connected</span></span></div></div><div class=lg style="justify-content:center;margin-top:12px"><span data-f=conn data-v=1 style="cursor:pointer"><i style="background:var(--gn)"></i>Connected ${cn} (${p1(cd)})</span><span data-f=conn data-v=0 style="cursor:pointer"><i style="background:var(--rd)"></i>Not connected ${nc} (${p1(100-cd)})</span></div>`;
  const mo=new Map(),mg=k=>mo.get(k)||(mo.set(k,{l:new Set,c:0,n:0}),mo.get(k));V.forEach(v=>{if(v.l.ld)mg(v.l.ld.slice(0,7)).l.add(v.l.uid)});at.forEach(a=>{if(a.date){const o=mg(a.date.slice(0,7));o.c++;o.n+=a.conn===1}});
@@ -165,13 +165,21 @@ async function exp(){const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"',csv=[HD
  try{const d=window.claude&&await claude.use('downloads');if(!d)throw 0;await d.save({filename:'calling-data-filtered.csv',data:csv})}catch(e){alert('Download is not available in this view.')}}
 const API_URL='https://script.google.com/macros/s/AKfycbyxh_pxg24fjhAkYHfAwjYfC6JvlKLlKxnsgc5SnlnMYzjZzYjgbCT7wrbBSnsJ7_E/exec?token=Ada@2026'; // optional: paste your Apps Script Web App URL (with ?token=...) here instead of using the Connect button
 let API=API_URL;if(!API)try{API=localStorage.getItem('api')||''}catch(e){}
-async function pull(){if(!API)return;
- try{let start=0,rows=[],header=[];
-  while(start!==null){const u=API+(API.includes('?')?'&':'?')+'start='+start+'&count=3000',j=await(await fetch(u,{cache:'no-store'})).json();
-   if(j.error)throw new Error(j.error);header=j.header;rows=rows.concat(j.rows);start=j.next;$('#meta').innerHTML='<span><i class=dot></i>Loading '+rows.length+' / '+j.total+' rows…</span>'}
-  const f=F,d=DF;load([header,...rows].map(x=>x.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),0);F=f;DF=d;buildF();sync();render()}
- catch(e){$('#meta').insertAdjacentHTML('beforeend','<span style="color:#fca5a5">⚠ Sheet connection failed: '+esc(e.message||e)+'</span>')}}
+const st=t=>{$('#st').textContent=t||''};
+const idb=(m,v)=>new Promise(r=>{try{const q=indexedDB.open('calldash',1);q.onupgradeneeded=()=>q.result.createObjectStore('d');q.onerror=()=>r(null);
+ q.onsuccess=()=>{const tx=q.result.transaction('d',m=='get'?'readonly':'readwrite'),o=tx.objectStore('d'),x=m=='get'?o.get('rows'):o.put(v,'rows');x.onsuccess=()=>r(x.result||null);x.onerror=()=>r(null)}}catch(e){r(null)}});
+async function jf(u,t=0){try{const j=await(await fetch(u,{cache:'no-store'})).json();if(j.error)throw new Error(j.error);return j}catch(e){if(t<2&&!/Unauthorized/.test(e.message))return jf(u,t+1);throw e}}
+async function fetchAll(){const base=API+(API.includes('?')?'&':'?'),PS=5000,f=await jf(base+'start=0&count='+PS),T=f.total,starts=[];
+ for(let s=PS;s<T;s+=PS)starts.push(s);let done=f.rows.length,ix=0;const res=[];st('Loading '+done+' / '+T+' rows…');
+ const w=async()=>{while(ix<starts.length){const i=ix++,j=await jf(base+'start='+starts[i]+'&count='+PS);res[i]=j.rows;done+=j.rows.length;st('Loading '+done+' / '+T+' rows…')}};
+ await Promise.all([1,2,3,4,5,6].map(w));return{header:f.header,rows:f.rows.concat(...res)}}
+function apply(d){const f=F,x=DF;load('',0,[d.header,...d.rows]);F=f;DF=x;buildF();sync();render()}
+let busy=0;
+async function pull(first){if(!API||busy)return;busy=1;
+ try{if(first){const c=await idb('get');if(c){apply(c);STAMP=new Date(c.ts).toLocaleString()+' (cached)';meta(1);st('Showing saved data · updating from sheet…')}}
+  const d=await fetchAll();d.ts=Date.now();apply(d);st('');idb('put',d)}
+ catch(e){st('⚠ Sheet connection failed: '+(e.message||e))}finally{busy=0}}
 $('#rf').onclick=()=>{if(API)pull();else $('#cn').click()};
 $('#cn').onclick=()=>{const u=prompt('Paste your Apps Script Web App URL (including ?token=...)',API);if(u){API=u.trim();try{localStorage.setItem('api',API)}catch(e){}pull()}};
-if(API){$('#meta').innerHTML='<span><i class=dot></i>Connecting to Calling File…</span>';pull();setInterval(pull,60000)}else{meta(0);render()}
+if(API){pull(1);setInterval(()=>{if(!document.hidden)pull()},300000)}else{meta(0);render()}
 </script></body></html>
