@@ -197,12 +197,12 @@ async function jf(u,t=0){try{const ac=new AbortController(),tm=setTimeout(()=>ac
 async function fetchAll(){const base=API+(API.includes('?')?'&':'?'),PS=3000,f=await jf(base+'start=0&count='+PS),T=f.total,starts=[];
  for(let s=PS;s<T;s+=PS)starts.push(s);let done=f.rows.length,ix=0;const res=[];st('Loading '+done+' / '+T+' rows…');
  const w=async()=>{while(ix<starts.length){const i=ix++,j=await jf(base+'start='+starts[i]+'&count='+PS);res[i]=j.rows;done+=j.rows.length;st('Loading '+done+' / '+T+' rows…')}};
- await Promise.all([1,2,3,4,5,6].map(w));return{header:f.header,rows:f.rows.concat(...res)}}
+ await Promise.all([1,2,3,4,5,6].map(w));return{header:f.header,rows:f.rows.concat(...res),info:{v:f.v||0,cols:f.cols||0}}}
 function apply(d){const f=F,x=DF;load('',0,[d.header,...d.rows]);F=f;DF=x;buildF();sync();render()}
 let busy=0;
 async function pull(first){if(!API||busy)return;busy=1;
  try{if(first){const c=await Promise.race([idb('get'),new Promise(r=>setTimeout(()=>r(null),2500))]);if(c){apply(c);STAMP=new Date(c.ts).toLocaleString()+' (cached)';meta(1);st('Showing saved data · updating from sheet…')}}
-  const d=await fetchAll();d.ts=Date.now();apply(d);st('');idb('put',d)}
+  const d=await fetchAll();d.ts=Date.now();apply(d);st(d.info&&d.info.v>=3?'':'⚠ Your Apps Script is an OLD version, so some columns may be missing. Paste the new Code.gs and use Deploy → Manage deployments → Edit → New version.');idb('put',d)}
  catch(e){st('⚠ Sheet connection failed: '+(e.message||e))}finally{busy=0}}
 $('#rf').onclick=()=>{if(API)pull();else $('#cn').click()};
 $('#cn').onclick=()=>{const u=prompt('Paste your Apps Script Web App URL (including ?token=...)',API);if(u){API=u.trim();try{localStorage.setItem('api',API)}catch(e){}pull()}};
